@@ -16,7 +16,7 @@ Neovimで日本語入力時のIME（Input Method Editor）を自動的に制御�
 
 ```lua
 {
-  "your-username/ime-auto.nvim",
+  "shabaraba/ime-auto.nvim",
   event = "InsertEnter",
   config = function()
     require("ime-auto").setup({
