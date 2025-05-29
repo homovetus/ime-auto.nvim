@@ -96,6 +96,9 @@ function M.control(action)
 end
 
 function M.off()
+  if not M.get_status() then
+    return
+  end
   M.control("off")
 end
 
