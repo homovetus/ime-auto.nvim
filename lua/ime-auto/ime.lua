@@ -141,12 +141,14 @@ local function ime_control_macos(action)
   else
     -- Default: osascript (built-in)
     if action == "off" then
-      return vim.fn.system("osascript -e 'tell application \"System Events\" to key code 102'")
+      return vim.fn.system("swift -e 'import Carbon; let sources = TISCreateInputSourceList([kTISPropertyInputSourceID: \"com.apple.keylayout.ABC\"] as CFDictionary, false).takeRetainedValue() as! [TISInputSource]; TISSelectInputSource(sources[0])'")
     elseif action == "on" then
-      return vim.fn.system("osascript -e 'tell application \"System Events\" to key code 104'")
+      return vim.fn.system("swift -e 'import Carbon; let sources = TISCreateInputSourceList([kTISPropertyInputSourceID: \"com.apple.inputmethod.SCIM.ITABC\"] as CFDictionary, false).takeRetainedValue() as! [TISInputSource]; TISSelectInputSource(sources[0])'")
     elseif action == "status" then
-      local result = execute_command("defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources 2>/dev/null | grep -E 'Japanese|Hiragana|Katakana' | wc -l")
+      local cmd = "defaults read ~/Library/Preferences/com.apple.HIToolbox.plist AppleSelectedInputSources 2>/dev/null | grep -c 'SCIM'"
+      local result = vim.fn.system(cmd)
       return result and tonumber(result) > 0
+end
     end
   end
 end
@@ -165,7 +167,7 @@ end
 local function ime_control_linux(action)
   local fcitx_exists = vim.fn.executable("fcitx-remote") == 1
   local ibus_exists = vim.fn.executable("ibus") == 1
-  
+
   if fcitx_exists then
     if action == "off" then
       return vim.fn.system("fcitx-remote -c")
@@ -185,23 +187,23 @@ local function ime_control_linux(action)
       return result and result:match("mozc") ~= nil
     end
   end
-  
+
   return nil
 end
 
 function M.control(action)
   local config = require("ime-auto.config").get()
-  
+
   if config.ime_method == "custom" then
     local cmd = config.custom_commands[action]
     if cmd then
       return execute_command(cmd)
     end
   end
-  
+
   local os = config.os
   local result = nil
-  
+
   if os == "macos" then
     result = ime_control_macos(action)
   elseif os == "windows" then
@@ -209,11 +211,11 @@ function M.control(action)
   elseif os == "linux" then
     result = ime_control_linux(action)
   end
-  
+
   if config.debug then
     vim.notify(string.format("[ime-auto] IME %s on %s", action, os), vim.log.levels.DEBUG)
   end
-  
+
   return result
 end
 
